@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Portabilidade | Renan G. Azanha</title>
+    <style>
+        /* Design System (Mesmo padrão do Dashboard) */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        
+        body {
+            background-color: #121214;
+            color: #e1e1e6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: #202024;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            border: 1px solid #323238;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        h2 { color: #fff; margin-bottom: 5px; font-size: 1.8rem; text-align: center; }
+        h2 span { color: #00B37E; }
+        p.subtitle { color: #a8a8b3; text-align: center; margin-bottom: 30px; font-size: 0.9rem; }
+
+        .input-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: #a8a8b3; font-size: 0.9rem; }
+        
+        input {
+            width: 100%;
+            background: #121214;
+            border: 1px solid #323238;
+            padding: 12px;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+            transition: 0.2s;
+        }
+
+        input:focus { border-color: #00B37E; }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 6px;
+            background: #00B37E;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:hover { background: #00875f; }
+        
+        .btn-back {
+            background: transparent;
+            border: 1px solid #323238;
+            margin-top: 15px;
+            color: #a8a8b3;
+        }
+        .btn-back:hover { background: #29292e; color: #fff; }
+
+        /* Área de Resultados */
+        #resultado {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #323238;
+            display: none; /* Escondido por padrão */
+        }
+
+        .card-result {
+            background: #29292e;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-result span { color: #a8a8b3; font-size: 0.9rem; }
+        .card-result strong { font-size: 1.2rem; color: #fff; }
+        .card-result strong.green { color: #00B37E; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Simulador de <span>Portabilidade</span></h2>
+        <p class="subtitle">Calcule a redução real da sua parcela</p>
+
+        <div class="input-group">
+            <label>Saldo Devedor Atual (R$)</label>
+            <input type="number" id="saldo" placeholder="Ex: 50000.00">
+        </div>
+
+        <div class="input-group">
+            <label>Nova Taxa de Juros (% ao mês)</label>
+            <input type="number" id="taxa" placeholder="Ex: 1.20" step="0.01">
+        </div>
+
+        <div class="input-group">
+            <label>Prazo Restante (Meses)</label>
+            <input type="number" id="prazo" placeholder="Ex: 60">
+        </div>
+        
+        <div class="input-group">
+            <label>Valor da Parcela Atual (R$) (Opcional)</label>
+            <input type="number" id="parcelaAtual" placeholder="Para comparar economia">
+        </div>
+
+        <button onclick="calcular()">CALCULAR ECONOMIA</button>
+        <button class="btn-back" onclick="window.location.href='index.html'">Voltar ao Menu</button>
+
+        <div id="resultado">
+            <div class="card-result">
+                <span>Nova Parcela Estimada:</span>
+                <strong id="novaParcela">R$ 0,00</strong>
+            </div>
+            <div class="card-result">
+                <span>Economia Mensal:</span>
+                <strong class="green" id="economiaMensal">R$ 0,00</strong>
+            </div>
+            <div class="card-result">
+                <span>Economia Total no Contrato:</span>
+                <strong class="green" id="economiaTotal">R$ 0,00</strong>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function calcular() {
+            // 1. Pegar valores
+            let saldo = parseFloat(document.getElementById('saldo').value);
+            let taxa = parseFloat(document.getElementById('taxa').value);
+            let prazo = parseInt(document.getElementById('prazo').value);
+            let parcelaAtual = parseFloat(document.getElementById('parcelaAtual').value);
+
+            // Validação simples
+            if (!saldo || !taxa || !prazo) {
+                alert("Por favor, preencha Saldo, Taxa e Prazo.");
+                return;
+            }
+
+            // 2. Cálculo PMT (Sistema Price)
+            // Fórmula: PMT = P * ( i * (1+i)^n ) / ( (1+i)^n - 1 )
+            let i = taxa / 100; // Taxa unitária
+            let novaParcela = saldo * ( (i * Math.pow(1+i, prazo)) / (Math.pow(1+i, prazo) - 1) );
+
+            // 3. Exibir Resultados
+            document.getElementById('resultado').style.display = 'block';
+            
+            // Formatação Moeda BRL
+            document.getElementById('novaParcela').innerText = novaParcela.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+            // Se o usuário informou a parcela atual, calcula a economia
+            if (parcelaAtual) {
+                let economiaMes = parcelaAtual - novaParcela;
+                let economiaTot = economiaMes * prazo;
+
+                document.getElementById('economiaMensal').innerText = economiaMes.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                document.getElementById('economiaTotal').innerText = economiaTot.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                
+                // Muda a cor se for negativo (prejuízo)
+                if (economiaMes < 0) {
+                    document.getElementById('economiaMensal').style.color = '#e52e4d'; // Vermelho
+                } else {
+                    document.getElementById('economiaMensal').style.color = '#00B37E'; // Verde
+                }
+            } else {
+                document.getElementById('economiaMensal').innerText = "---";
+                document.getElementById('economiaTotal').innerText = "---";
+            }
+        }
+    </script>
+
+</body>
+</html>
